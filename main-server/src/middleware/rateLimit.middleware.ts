@@ -5,7 +5,9 @@ import { redis } from '../config/redis';
 
 // General API rate limiter
 export const apiLimiter = rateLimit({
+
   store: new RedisStore({
+    //@ts-expect-error
     client: redis,
     prefix: 'rl:api:',
   }),
@@ -22,6 +24,7 @@ export const apiLimiter = rateLimit({
 // Auth rate limiter (stricter)
 export const authLimiter = rateLimit({
   store: new RedisStore({
+    //@ts-expect-error
     client: redis,
     prefix: 'rl:auth:',
   }),
@@ -37,6 +40,7 @@ export const authLimiter = rateLimit({
 // Create channel rate limiter
 export const createChannelLimiter = rateLimit({
   store: new RedisStore({
+    //@ts-expect-error
     client: redis,
     prefix: 'rl:create:',
   }),

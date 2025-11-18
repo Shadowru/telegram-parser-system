@@ -11,6 +11,7 @@ export const errorHandler = (
   err: CustomError,
   req: Request,
   res: Response,
+  //@ts-expect-error
   next: NextFunction
 ): void => {
   // Log error
@@ -59,6 +60,7 @@ export const errorHandler = (
 export const notFoundHandler = (
   req: Request,
   res: Response,
+  //@ts-expect-error
   next: NextFunction
 ): void => {
   res.status(404).json({

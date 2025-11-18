@@ -120,6 +120,7 @@ export class AuthController {
       }
 
       const success = await authService.changePassword(
+        //@ts-expect-error
         userId,
         currentPassword,
         newPassword

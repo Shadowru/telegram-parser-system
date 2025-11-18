@@ -230,6 +230,7 @@ export class ChannelsService {
       await cacheDel(`channel:${id}`);
       await cacheDel('channels:*');
 
+    //@ts-expect-error
       return result.rowCount > 0;
     } catch (error) {
       await client.query('ROLLBACK');

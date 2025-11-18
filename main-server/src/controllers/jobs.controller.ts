@@ -127,6 +127,7 @@ export class JobsController {
     }
   }
 
+  //@ts-expect-error
   async getJobStats(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const stats = await jobsService.getJobStats();

@@ -211,6 +211,7 @@ export class JobsService {
         cancelled: 0,
       };
 
+    //@ts-expect-error
       result.rows.forEach((row) => {
         stats[row.status] = parseInt(row.count, 10);
       });

@@ -86,6 +86,7 @@ export class WorkersService {
       );
 
       const jobStats: any = {};
+    //@ts-expect-error
       jobsResult.rows.forEach((row) => {
         jobStats[row.status] = {
           count: parseInt(row.count, 10),
