@@ -1,0 +1,205 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: telegram-parser-db
+    environment:
+      POSTGRES_DB: telegram_parser
+      POSTGRES_USER: parser_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - telegram-parser-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parser_user -d telegram_parser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-parser-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - telegram-parser-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Main Server (API)
+  main-server:
+    build:
+      context: ./main-server
+      dockerfile: Dockerfile
+    container_name: telegram-parser-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://parser_user:${DB_PASSWORD}@postgres:5432/telegram_parser
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      COLLECTOR_AUTH_TOKEN: ${COLLECTOR_AUTH_TOKEN}
+    volumes:
+      - ./main-server/logs:/app/logs
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Data Collector
+  data-collector:
+    build:
+      context: ./data-collector
+      dockerfile: Dockerfile
+    container_name: telegram-parser-collector
+    environment:
+      DATABASE_URL: postgresql://parser_user:${DB_PASSWORD}@postgres:5432/telegram_parser
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      WORKER_AUTH_TOKEN: ${COLLECTOR_AUTH_TOKEN}
+      API_PORT: 8000
+    volumes:
+      - ./data-collector/logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Worker 1
+  worker-1:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: telegram-parser-worker-1
+    environment:
+      COLLECTOR_API_URL: http://data-collector:8000
+      WORKER_AUTH_TOKEN: ${COLLECTOR_AUTH_TOKEN}
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_PHONE: ${TELEGRAM_PHONE_1}
+      WORKER_ID: worker-1
+      WORKER_NAME: "Worker 1"
+      WORKER_LOCATION: "Server A"
+    volumes:
+      - ./worker/sessions/worker-1:/app/sessions
+      - ./worker/logs/worker-1:/app/logs
+    depends_on:
+      - data-collector
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Worker 2
+  worker-2:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: telegram-parser-worker-2
+    environment:
+      COLLECTOR_API_URL: http://data-collector:8000
+      WORKER_AUTH_TOKEN: ${COLLECTOR_AUTH_TOKEN}
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_PHONE: ${TELEGRAM_PHONE_2}
+      WORKER_ID: worker-2
+      WORKER_NAME: "Worker 2"
+      WORKER_LOCATION: "Server B"
+    volumes:
+      - ./worker/sessions/worker-2:/app/sessions
+      - ./worker/logs/worker-2:/app/logs
+    depends_on:
+      - data-collector
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Dashboard (Frontend)
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: telegram-parser-dashboard
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+    ports:
+      - "80:80"
+    depends_on:
+      - main-server
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Prometheus (Monitoring)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: telegram-parser-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+  # Grafana (Visualization)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: telegram-parser-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - telegram-parser-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  telegram-parser-network:
+    driver: bridge
