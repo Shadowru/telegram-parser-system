@@ -29,7 +29,7 @@ COPY package*.json ./
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
-COPY /app/src/scripts ./dist/scripts
+COPY src/scripts ./dist/scripts
 
 # Create logs directory
 RUN mkdir -p logs && \
