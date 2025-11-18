@@ -1,5 +1,5 @@
 // dashboard/src/App.tsx
-import React from 'react';
+//import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, CssBaseline } from '@mui/material';
@@ -15,6 +15,7 @@ import Workers from './pages/Workers';
 //import Analytics from './pages/Analytics.ts';
 // /import Settings from './pages/Settings.ts';
 
+//@ts-ignore
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
