@@ -28,6 +28,11 @@ const queryClient = new QueryClient({
   },
 });
 
+
+//                <Route path="analytics" element={<Analytics />} />
+//                <Route path="settings" element={<Settings />} />
+
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -45,8 +50,6 @@ function App() {
                 <Route path="channels/:id" element={<ChannelDetail />} />
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="workers" element={<Workers />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="settings" element={<Settings />} />
               </Route>
             </Routes>
           </Router>
