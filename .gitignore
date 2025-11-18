@@ -1,2 +1,4 @@
 main-server/node_modules/
 main-server/dist/
+dashboard/node_modules/
+dashboard/dist/

@@ -32,8 +32,8 @@ COPY --from=builder /app/dist ./dist
 
 # Create logs directory
 RUN mkdir -p logs && \
-    addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser && \
+    addgroup -g 1001 appuser && \
+    adduser -D -u 1001 -G appuser appuser && \
     chown -R appuser:appuser /app
 
 USER appuser

@@ -5,8 +5,8 @@ import { AnalyticsService } from "../services/analytics.service";
 const analyticsService = new AnalyticsService();
 
 export class AnalyticsController {
-  //@ts-expect-error
   async getSystemStats(
+    //@ts-expect-error
     req: Request,
     res: Response,
     next: NextFunction

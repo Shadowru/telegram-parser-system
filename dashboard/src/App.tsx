@@ -12,8 +12,8 @@ import Channels from './pages/Channels';
 import ChannelDetail from './pages/ChannelDetail';
 import Jobs from './pages/Jobs';
 import Workers from './pages/Workers';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
+//import Analytics from './pages/Analytics.ts';
+// /import Settings from './pages/Settings.ts';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
