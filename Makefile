@@ -19,11 +19,11 @@ help: ## Show this help message
 # Docker commands
 build: ## Build all Docker images
 	@echo "$(BLUE)Building Docker images...$(NC)"
-	docker-compose build
+	docker compose build
 
 up: ## Start all services
 	@echo "$(BLUE)Starting services...$(NC)"
-	docker-compose up -d
+	docker compose up -d
 	@echo "$(GREEN)Services started successfully!$(NC)"
 	@echo "Dashboard: http://localhost"
 	@echo "API: http://localhost:3000"
@@ -31,44 +31,44 @@ up: ## Start all services
 
 down: ## Stop all services
 	@echo "$(YELLOW)Stopping services...$(NC)"
-	docker-compose down
+	docker compose down
 	@echo "$(GREEN)Services stopped$(NC)"
 
 restart: down up ## Restart all services
 
 logs: ## Show logs from all services
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-api: ## Show logs from main server
-	docker-compose logs -f main-server
+	docker compose logs -f main-server
 
 logs-collector: ## Show logs from data collector
-	docker-compose logs -f data-collector
+	docker compose logs -f data-collector
 
 logs-worker: ## Show logs from workers
-	docker-compose logs -f worker-1 worker-2
+	docker compose logs -f worker-1 worker-2
 
 ps: ## Show running containers
-	docker-compose ps
+	docker compose ps
 
 # Database commands
 db-migrate: ## Run database migrations
 	@echo "$(BLUE)Running database migrations...$(NC)"
-	docker-compose exec postgres psql -U parser_user -d telegram_parser -f /docker-entrypoint-initdb.d/init.sql
+	docker compose exec postgres psql -U parser_user -d telegram_parser -f /docker-entrypoint-initdb.d/init.sql
 	@echo "$(GREEN)Migrations completed$(NC)"
 
 db-shell: ## Open PostgreSQL shell
-	docker-compose exec postgres psql -U parser_user -d telegram_parser
+	docker compose exec postgres psql -U parser_user -d telegram_parser
 
 db-backup: ## Backup database
 	@echo "$(BLUE)Creating database backup...$(NC)"
 	@mkdir -p backups
-	docker-compose exec -T postgres pg_dump -U parser_user telegram_parser > backups/backup_$(shell date +%Y%m%d_%H%M%S).sql
+	docker compose exec -T postgres pg_dump -U parser_user telegram_parser > backups/backup_$(shell date +%Y%m%d_%H%M%S).sql
 	@echo "$(GREEN)Backup created in backups/$(NC)"
 
 db-restore: ## Restore database from backup (usage: make db-restore FILE=backup.sql)
 	@echo "$(YELLOW)Restoring database from $(FILE)...$(NC)"
-	docker-compose exec -T postgres psql -U parser_user -d telegram_parser < $(FILE)
+	docker compose exec -T postgres psql -U parser_user -d telegram_parser < $(FILE)
 	@echo "$(GREEN)Database restored$(NC)"
 
 db-reset: ## Reset database (WARNING: deletes all data)
@@ -76,18 +76,18 @@ db-reset: ## Reset database (WARNING: deletes all data)
 	@read -p "Are you sure? [y/N] " -n 1 -r; \
 	echo; \
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		docker-compose exec postgres psql -U parser_user -d telegram_parser -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"; \
+		docker compose exec postgres psql -U parser_user -d telegram_parser -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"; \
 		$(MAKE) db-migrate; \
 		echo "$(GREEN)Database reset completed$(NC)"; \
 	fi
 
 # Redis commands
 redis-cli: ## Open Redis CLI
-	docker-compose exec redis redis-cli -a $$(grep REDIS_PASSWORD .env | cut -d '=' -f2)
+	docker compose exec redis redis-cli -a $$(grep REDIS_PASSWORD .env | cut -d '=' -f2)
 
 redis-flush: ## Flush Redis cache
 	@echo "$(YELLOW)Flushing Redis cache...$(NC)"
-	docker-compose exec redis redis-cli -a $$(grep REDIS_PASSWORD .env | cut -d '=' -f2) FLUSHALL
+	docker compose exec redis redis-cli -a $$(grep REDIS_PASSWORD .env | cut -d '=' -f2) FLUSHALL
 	@echo "$(GREEN)Cache flushed$(NC)"
 
 # Development commands
@@ -136,7 +136,7 @@ grafana: ## Open Grafana dashboard
 # Cleanup commands
 clean: ## Remove all containers, volumes, and images
 	@echo "$(RED)Removing all containers, volumes, and images...$(NC)"
-	docker-compose down -v --rmi all
+	docker compose down -v --rmi all
 	@echo "$(GREEN)Cleanup completed$(NC)"
 
 clean-logs: ## Remove log files
@@ -170,7 +170,7 @@ health: ## Check health of all services
 # Worker management
 scale-workers: ## Scale workers (usage: make scale-workers N=5)
 	@echo "$(BLUE)Scaling workers to $(N)...$(NC)"
-	docker-compose up -d --scale worker=$(N)
+	docker compose up -d --scale worker=$(N)
 	@echo "$(GREEN)Workers scaled$(NC)"
 
 # Setup commands
@@ -191,4 +191,4 @@ setup: ## Initial setup (create .env, build, migrate)
 # User management
 create-user: ## Create admin user
 	@echo "$(BLUE)Creating admin user...$(NC)"
-	docker-compose exec main-server node -e "require('./dist/scripts/create-user.js')"
+	docker compose exec main-server node -e "require('./dist/scripts/create-user.js')"
